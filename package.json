@@ -1,0 +1,23 @@
+{
+  "name": "devtoken",
+  "version": "1.0.0",
+  "description": "DEV Token for Devcamp Platform",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "keywords": [
+    "DEV",
+    "Devcamp",
+    "token",
+    "ERC20"
+  ],
+  "author": "Wutthiphat Phuriphatwatthana",
+  "license": "MIT",
+  "dependencies": {
+    "truffle": "^4.0.5",
+    "zeppelin-solidity": "^1.6.0"
+  }
+}
