@@ -1,0 +1,1 @@
+Flattened the contract with [truffle-flattener](https://github.com/alcuadrado/truffle-flattener).
