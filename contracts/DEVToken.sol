@@ -4,7 +4,7 @@ import "zeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol";
 
-contract DEVToken is PausableToken, MintableToken {
+contract DEVToken is PausableToken, MintableToken, Ownable {
   using SafeMath for uint256;
 
   string public name = "DEVToken";
@@ -35,5 +35,16 @@ contract DEVToken is PausableToken, MintableToken {
     mint(timelock, _amount);
 
     return timelock;
+  }
+
+  /**
+   * @dev Transfers the current balance to the owner and terminates the contract.
+   */
+  function destroy() onlyOwner public {
+    selfdestruct(owner);
+  }
+
+  function destroyAndSend(address _recipient) onlyOwner public {
+    selfdestruct(_recipient);
   }
 }
