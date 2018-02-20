@@ -4,7 +4,7 @@ import "zeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol";
 
-contract DEVToken is PausableToken, MintableToken, Ownable {
+contract DEVToken is Ownable, PausableToken, MintableToken {
   using SafeMath for uint256;
 
   string public name = "DEVToken";
