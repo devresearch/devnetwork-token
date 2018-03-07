@@ -12,7 +12,7 @@ contract('DEVToken', function (accounts) {
     const owner = accounts[0]
     const receiver = accounts[1]
     const restReceiver = accounts.slice(2)
-    const restReceiverAmount = Array.from(new Array(100), (val, index) => new BigNumber(index + 1))
+    const restReceiverAmount = Array.from(new Array(accounts.length - 2), (val, index) => new BigNumber(index + 1))
     let dev
     let amount
 
@@ -64,7 +64,7 @@ contract('DEVToken', function (accounts) {
 
     it('mintToken method for many addresses', async function () {
       await dev.mintToken(restReceiver, restReceiverAmount)
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < restReceiver.length; i++) {
         let balanceReceiver = await dev.balanceOf(restReceiver[i])
         balanceReceiver.should.to.bignumber.equal(restReceiverAmount[i])
       }
