@@ -74,7 +74,7 @@ web3.eth.getGasPrice()
   })
   .then((opts) => {
     // Maxmimum length than can handle array of address and amount is 200
-    contract.methods['mintToken(address[],uint256[])'](opts.accounts.slice(2), Array.from(new Array(opts.accounts.length - 2), (val, index) => index + 1))
+    contract.methods['mintToken(address[],uint256[])'](opts.accounts.slice(2), Array.from(new Array(opts.accounts.length - 2), (val, index) => 1000000))
       .estimateGas({ from: process.env.OWNER })
       .then((gasAmount) => {
         console.log(`Estimated gas for mintToken method: ${gasAmount}`)
