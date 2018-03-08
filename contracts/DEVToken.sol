@@ -1,39 +1,103 @@
 pragma solidity ^0.4.18;
 
-import "zeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
-import "zeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
-import "zeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "zeppelin-solidity/contracts/ReentrancyGuard.sol";
 
-contract DEVToken is PausableToken, MintableToken {
+contract DEVToken is StandardToken, BurnableToken, Ownable, ReentrancyGuard {
   using SafeMath for uint256;
 
-  string public name = "DEVToken";
-  string public symbol = "DEV";
-  uint8 public decimals = 18;
+  // Constants
+  string public  name = "DEVToken";
+  string public  symbol = "DEV";
+  uint8  public  decimals = 18;
+  uint256 public constant INITIAL_SUPPLY           =  400000000 * (10 ** uint256(decimals));
+  uint256 public constant CONTRIBUTE_ALLOWANCE     =  240000000 * (10 ** uint256(decimals));
+  uint256 public constant BOUNTY_ALLOWANCE         =  80000000 * (10 ** uint256(decimals));
+  uint256 public constant FOUNDATION_ALLOWANCE     =  80000000 * (10 ** uint256(decimals));
 
-  /**
-   * @dev Override the pause function to ensure no one can pause after minting.
-   */
-  function pause() onlyOwner whenNotPaused canMint public {
-      super.pause();
-  }
-
-  /**
-   * @dev Make sure we cannot finish minting when paused, otherwise we are paused forever.
-   */
-  function finishMinting() onlyOwner whenNotPaused canMint public returns (bool) {
-      return super.finishMinting();
-  }
+  bool    public transferEnabled = false; // indicates that tokens can transfer or not
+  uint256 public transferTimeLockedStart;
+  uint256 public transferTimeLockedEnd;
   
-  /**
-   * @dev Mint timelocked tokens
-   */
-  function mintTimelocked(address _to, uint256 _amount, uint256 _releaseTime)
-    onlyOwner canMint public returns (TokenTimelock) {
+  uint256 public raisedContributeAllowance;
+  uint256 public raisedBountyAllowance;
+  address public foundation;
 
-    TokenTimelock timelock = new TokenTimelock(this, _to, _releaseTime);
-    mint(timelock, _amount);
-
-    return timelock;
+  // Modifiers
+  modifier validDestination(address _to) {
+    require(_to != address(0x0));
+    require(_to != address(this));
+    require(_to != owner);
+    _;
   }
+
+  function DEVToken(address _foundation, 
+    uint256 _transferTimeLockedStart, 
+    uint256 _transferTimeLockedEnd) public 
+  {
+    totalSupply_ = INITIAL_SUPPLY;
+
+    // mint token
+    balances[msg.sender] = INITIAL_SUPPLY;
+    Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+
+    foundation = _foundation;
+    transferTimeLockedStart = _transferTimeLockedStart;
+    transferTimeLockedEnd = _transferTimeLockedEnd;
+  }
+
+  function spreadForContributorAddresses(address[] _to, uint256[] _value) 
+    public onlyOwner 
+  {
+    for (uint256 i = 0 ; i < _to.length ; i++) {
+      spreadForContributor(_to[i], _value[i]);
+    }
+  }
+
+  function spreadForContributor(address _to, uint256 _value) 
+    public onlyOwner validDestination(_to) 
+  {
+    uint256 addAmountWei = _value.mul(10 ** uint256(decimals));
+    raisedContributeAllowance = raisedContributeAllowance.add(addAmountWei);
+    
+    require(CONTRIBUTE_ALLOWANCE >= addAmountWei);
+    require(CONTRIBUTE_ALLOWANCE >= raisedContributeAllowance);
+
+    balances[_to] = balances[_to].add(addAmountWei);
+    balances[msg.sender] = balances[msg.sender].sub(addAmountWei);
+  }
+
+  function enableTransfer() external onlyOwner {
+    transferEnabled = true;
+  }
+
+  /**
+   * @dev Overrides ERC20 transfer function with modifier that prevents the
+   * ability to transfer tokens until after transfers have been enabled.
+   */
+  function transfer(address _to, uint256 _value) 
+    public validDestination(_to) returns (bool) 
+  {
+    require(transferEnabled);
+    if (msg.sender == foundation) {
+      require(now >= transferTimeLockedEnd);
+    }
+    return super.transfer(_to, _value);
+  }
+
+  /**
+   * @dev Overrides ERC20 transfer function with modifier that prevents the
+   * ability to transfer tokens until after transfers have been enabled.
+   */
+  function transferFrom(address _from, address _to, uint256 _value) 
+    public validDestination(_to) returns (bool) 
+  {
+    require(transferEnabled);
+    if (_from == foundation) {
+      require(now >= transferTimeLockedEnd);
+    }
+    return super.transferFrom(_from, _to, _value);
+  } 
 }
