@@ -74,21 +74,36 @@ web3.eth.getGasPrice()
     // address _to come from testrpc
     contract.options.address = opts.address
 
-    contract.methods['spreadForContributor(address,uint256)'](opts.restContributor[0], 100)
+    contract.methods['spreadToken(address,uint256,uint8)'](opts.restContributor[0], web3.utils.toBN('1e21'), 1)
       .estimateGas({ from: opts.owner })
       .then((gasAmount) => {
-        console.log(`Estimated gas for mint method: ${gasAmount}`)
+        console.log(`Estimated gas for spreadToken method: ${gasAmount}`)
       })
 
     return opts
   })
   .then((opts) => {
-    // Maxmimum length than can handle array of address and amount is approximately 185
-    contract.methods['spreadForContributorAddresses(address[],uint256[])']
-      (opts.restContributor, Array.from(new Array(opts.restContributor.length), (val, index) => 10000))
+    // Maxmimum length than can handle array of address and amount is approximately 180
+    contract.methods['spreadTokenAddresses(address[],uint256[],uint8)']
+      (opts.restContributor, Array.from(new Array(opts.restContributor.length), (val, index) => web3.utils.toBN('1e22')), 1)
       .estimateGas({ from: opts.owner })
       .then((gasAmount) => {
-        console.log(`Estimated gas for mintToken method: ${gasAmount}`)
+        console.log(`Estimated gas for spreadTokenAddresses method: ${gasAmount}`)
+      })
+
+    return opts
+  })
+  .then((opts) => {
+    contract.methods.enableTransfer().send({ from: opts.owner }).
+      then(() => {
+
+        // Estimate gas for transfer function
+        contract.methods['transfer(address,uint256)']
+          (opts.restContributor[0], web3.utils.toBN('1e25'))
+          .estimateGas({ from: opts.owner })
+          .then((gasAmount) => {
+            console.log(`Estimated gas for transfer method: ${gasAmount}`)
+          })
       })
   })
   .catch(console.error)
