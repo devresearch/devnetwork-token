@@ -27,7 +27,8 @@ contract('DEVToken', function (accounts) {
     beforeEach(async function () {
       dev = await DEVToken.new(foundation, nowTimeUnix, oneYearLaterTimeUnix)
       await dev.enableTransfer()
-      await dev.spreadForContributor(contributor1, new BigNumber(10000))
+      await dev.spreadForContributor(contributor1, new BigNumber(10000 * 10 ** 18))
+      await dev.foundationAllocated()
       await dev.approve(contributor2, new BigNumber(500 * 10 ** 18), { from: contributor1 })
     })
 
@@ -42,6 +43,40 @@ contract('DEVToken', function (accounts) {
 
       contributor1Balance.should.be.bignumber.equal(new BigNumber(9800 * 10 ** 18))
       contributor2Balance.should.be.bignumber.equal(new BigNumber(200 * 10 ** 18))
+    })
+
+    it('cannot invoke via foundation if currentTime is not equal or greater than releaseTime', async function () {
+      await dev.approve(contributor2, new BigNumber(500 * 10 ** 18), { from: foundation })
+      let contributor2Balance = await dev.balanceOf(contributor2)
+
+      contributor2Balance.should.be.bignumber.equal(new BigNumber(0))
+      await dev.transferFrom(foundation, contributor2, new BigNumber(200 * 10 ** 18), { from: contributor2 })
+        .should.be.rejectedWith(Error)
+
+      let foundationBalance = await dev.balanceOf(foundation)
+      contributor2Balance = await dev.balanceOf(contributor2)
+
+      foundationBalance.should.be.bignumber.equal(new BigNumber(80000000 * 10 ** 18))
+      contributor2Balance.should.be.bignumber.equal(new BigNumber(0))
+    })
+
+    it('can invoke via foundation if currentTime is equal or greater than releaseTime', async function () {
+      dev = await DEVToken.new(foundation, nowTimeUnix, nowTimeUnix)
+      await dev.enableTransfer()
+      await dev.foundationAllocated()
+      await dev.approve(contributor2, new BigNumber(500 * 10 ** 18), { from: foundation })
+
+      let contributor2Balance = await dev.balanceOf(contributor2)
+
+      contributor2Balance.should.be.bignumber.equal(new BigNumber(0))
+      await dev.transferFrom(foundation, contributor2, new BigNumber(1.234 * 10 ** 18), { from: contributor2 })
+        .should.be.fulfilled
+
+      let foundationBalance = await dev.balanceOf(foundation)
+      contributor2Balance = await dev.balanceOf(contributor2)
+
+      foundationBalance.should.be.bignumber.equal(new BigNumber(79999998.766 * 10 ** 18))
+      contributor2Balance.should.be.bignumber.equal(new BigNumber(1.234 * 10 ** 18))
     })
   })
 })

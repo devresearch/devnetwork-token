@@ -12,17 +12,17 @@ contract DEVToken is StandardToken, BurnableToken, Ownable, ReentrancyGuard {
   string public  name = "DEVToken";
   string public  symbol = "DEV";
   uint8  public  decimals = 18;
-  uint256 public constant INITIAL_SUPPLY           =  400000000 * (10 ** uint256(decimals));
-  uint256 public constant CONTRIBUTE_ALLOWANCE     =  240000000 * (10 ** uint256(decimals));
-  uint256 public constant BOUNTY_ALLOWANCE         =  80000000 * (10 ** uint256(decimals));
-  uint256 public constant FOUNDATION_ALLOWANCE     =  80000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY          =  400000000 * (10 ** uint256(decimals));
+  uint256 public constant CONTRIBUTE_ALLOCATE     =  240000000 * (10 ** uint256(decimals));
+  uint256 public constant BOUNTY_ALLOCATE         =  80000000 * (10 ** uint256(decimals));
+  uint256 public constant FOUNDATION_ALLOCATE     =  80000000 * (10 ** uint256(decimals));
 
   bool    public transferEnabled = false; // indicates that tokens can transfer or not
   uint256 public transferTimeLockedStart;
   uint256 public transferTimeLockedEnd;
   
-  uint256 public raisedContributeAllowance;
-  uint256 public raisedBountyAllowance;
+  uint256 public raisedContributeAllocate;
+  uint256 public raisedBountyAllocate;
   address public foundation;
 
   // Modifiers
@@ -41,32 +41,41 @@ contract DEVToken is StandardToken, BurnableToken, Ownable, ReentrancyGuard {
 
     // mint token
     balances[msg.sender] = INITIAL_SUPPLY;
-    Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+    Transfer(address(0x0), msg.sender, INITIAL_SUPPLY);
 
     foundation = _foundation;
     transferTimeLockedStart = _transferTimeLockedStart;
     transferTimeLockedEnd = _transferTimeLockedEnd;
   }
 
-  function spreadForContributorAddresses(address[] _to, uint256[] _value) 
+  function spreadForContributorAddresses(address[] _to, uint256[] _valueInWei) 
     public onlyOwner 
   {
     for (uint256 i = 0 ; i < _to.length ; i++) {
-      spreadForContributor(_to[i], _value[i]);
+      spreadForContributor(_to[i], _valueInWei[i]);
     }
   }
 
-  function spreadForContributor(address _to, uint256 _value) 
+  function spreadForContributor(address _to, uint256 _valueInWei) 
     public onlyOwner validDestination(_to) 
   {
-    uint256 addAmountWei = _value.mul(10 ** uint256(decimals));
-    raisedContributeAllowance = raisedContributeAllowance.add(addAmountWei);
-    
-    require(CONTRIBUTE_ALLOWANCE >= addAmountWei);
-    require(CONTRIBUTE_ALLOWANCE >= raisedContributeAllowance);
+    raisedContributeAllocate = raisedContributeAllocate.add(_valueInWei);
 
-    balances[_to] = balances[_to].add(addAmountWei);
-    balances[msg.sender] = balances[msg.sender].sub(addAmountWei);
+    require(CONTRIBUTE_ALLOCATE >= _valueInWei);
+    require(CONTRIBUTE_ALLOCATE >= raisedContributeAllocate);
+    require(raisedContributeAllocate >= _valueInWei);
+
+    balances[_to] = balances[_to].add(_valueInWei);
+    balances[msg.sender] = balances[msg.sender].sub(_valueInWei);
+    Transfer(msg.sender, _to, _valueInWei);
+  }
+
+  function foundationAllocated() external onlyOwner {
+    require(balances[foundation] < FOUNDATION_ALLOCATE);
+
+    balances[foundation] = FOUNDATION_ALLOCATE;
+    balances[msg.sender] = balances[msg.sender].sub(FOUNDATION_ALLOCATE);
+    Transfer(msg.sender, foundation, FOUNDATION_ALLOCATE);
   }
 
   function enableTransfer() external onlyOwner {
@@ -100,4 +109,16 @@ contract DEVToken is StandardToken, BurnableToken, Ownable, ReentrancyGuard {
     }
     return super.transferFrom(_from, _to, _value);
   } 
+
+  /**
+    * Overrides the burn function so that it cannot be called until after
+    * transfers have been enabled.
+    *
+    * @param _value    The amount of dev tokens in wei
+    */
+  function burn(uint256 _value) public {
+    require(transferEnabled || msg.sender == owner);
+    super.burn(_value);
+    Transfer(msg.sender, address(0x0), _value);
+  }
 }

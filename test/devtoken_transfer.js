@@ -25,7 +25,7 @@ contract('DEVToken', function (accounts) {
 
     beforeEach(async function () {
       dev = await DEVToken.new(foundation, nowTimeUnix, oneYearLaterTimeUnix)
-      await dev.spreadForContributor(contributor1, new BigNumber(10000))
+      await dev.spreadForContributor(contributor1, new BigNumber(10000 * 10 ** 18))
     })
 
     it('initial value of transferEnabled is false', async function () {
