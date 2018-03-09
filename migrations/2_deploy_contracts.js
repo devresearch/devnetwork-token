@@ -8,8 +8,8 @@ module.exports = function (deployer, network, accounts) {
   )
 
   if (network == 'live') {
-    deployer.deploy(DEVToken, process.env.FOUNDATION_ADDRESS, nowTimeUnix, oneYearLaterTimeUnix);
+    deployer.deploy(DEVToken, process.env.FOUNDATION_ADDRESS, process,env.BOUNTY, nowTimeUnix, oneYearLaterTimeUnix);
   } else {
-    deployer.deploy(DEVToken, accounts[1], nowTimeUnix, oneYearLaterTimeUnix);
+    deployer.deploy(DEVToken, accounts[1], accounts[2], nowTimeUnix, oneYearLaterTimeUnix);
   }
 };
