@@ -25,6 +25,9 @@ contract DEVToken is StandardToken, BurnableToken, Ownable, ReentrancyGuard {
   uint256 public raisedBountyAllocate;
   address public foundation;
 
+  // Enum
+  enum Category {CONTRIBUTE, BOUNTY}
+
   // Modifiers
   modifier validDestination(address _to) {
     require(_to != address(0x0));
@@ -48,22 +51,28 @@ contract DEVToken is StandardToken, BurnableToken, Ownable, ReentrancyGuard {
     transferTimeLockedEnd = _transferTimeLockedEnd;
   }
 
-  function spreadForContributorAddresses(address[] _to, uint256[] _valueInWei) 
+  function spreadTokenAddresses(address[] _to, uint256[] _valueInWei, uint8 category) 
     public onlyOwner 
   {
     for (uint256 i = 0 ; i < _to.length ; i++) {
-      spreadForContributor(_to[i], _valueInWei[i]);
+      spreadToken(_to[i], _valueInWei[i], category);
     }
   }
 
-  function spreadForContributor(address _to, uint256 _valueInWei) 
+  function spreadToken(address _to, uint256 _valueInWei, uint8 category) 
     public onlyOwner validDestination(_to) 
   {
-    raisedContributeAllocate = raisedContributeAllocate.add(_valueInWei);
-
-    require(CONTRIBUTE_ALLOCATE >= _valueInWei);
-    require(CONTRIBUTE_ALLOCATE >= raisedContributeAllocate);
-    require(raisedContributeAllocate >= _valueInWei);
+    if (category == uint8(Category.CONTRIBUTE)) {
+      raisedContributeAllocate = raisedContributeAllocate.add(_valueInWei);
+      require(CONTRIBUTE_ALLOCATE >= raisedContributeAllocate);
+      require(raisedContributeAllocate >= _valueInWei);
+    } else if (category == uint8(Category.BOUNTY)) {
+      raisedBountyAllocate = raisedBountyAllocate.add(_valueInWei);
+      require(BOUNTY_ALLOCATE >= raisedBountyAllocate);
+      require(raisedBountyAllocate >= _valueInWei);
+    } else {
+      revert();
+    }
 
     balances[_to] = balances[_to].add(_valueInWei);
     balances[msg.sender] = balances[msg.sender].sub(_valueInWei);
@@ -90,8 +99,8 @@ contract DEVToken is StandardToken, BurnableToken, Ownable, ReentrancyGuard {
     public validDestination(_to) returns (bool) 
   {
     require(transferEnabled);
-    if (msg.sender == foundation) {
-      require(now >= transferTimeLockedEnd);
+    if (msg.sender == foundation) { 
+      require(now >= transferTimeLockedEnd); 
     }
     return super.transfer(_to, _value);
   }
@@ -116,9 +125,8 @@ contract DEVToken is StandardToken, BurnableToken, Ownable, ReentrancyGuard {
     *
     * @param _value    The amount of dev tokens in wei
     */
-  function burn(uint256 _value) public {
+  function burn(uint256 _value) public onlyOwner {
     require(transferEnabled || msg.sender == owner);
     super.burn(_value);
-    Transfer(msg.sender, address(0x0), _value);
   }
 }
