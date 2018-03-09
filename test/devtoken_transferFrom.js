@@ -27,7 +27,7 @@ contract('DEVToken', function (accounts) {
     beforeEach(async function () {
       dev = await DEVToken.new(foundation, nowTimeUnix, oneYearLaterTimeUnix)
       await dev.enableTransfer()
-      await dev.spreadForContributor(contributor1, new BigNumber(10000 * 10 ** 18))
+      await dev.spreadToken(contributor1, new BigNumber(10000 * 10 ** 18), 1)
       await dev.foundationAllocated()
       await dev.approve(contributor2, new BigNumber(500 * 10 ** 18), { from: contributor1 })
     })
