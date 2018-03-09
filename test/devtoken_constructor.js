@@ -11,6 +11,7 @@ contract('DEVToken', function (accounts) {
 
     const owner = accounts[0]
     const foundation = accounts[1]
+    const bounty = accounts[2]
 
     const now = new Date()
     const nowTimeUnix = Math.floor(now.getTime() / 1000)
@@ -21,7 +22,7 @@ contract('DEVToken', function (accounts) {
     let dev
 
     beforeEach(async function () {
-      dev = await DEVToken.new(foundation, nowTimeUnix, oneYearLaterTimeUnix)
+      dev = await DEVToken.new(foundation, bounty, nowTimeUnix, oneYearLaterTimeUnix)
     })
 
     it('totalSupply equal to 400,000,000', async function () {
@@ -32,6 +33,11 @@ contract('DEVToken', function (accounts) {
     it('foundation address should be the same as input address of constructor', async function () {
       const _foundation = await dev.foundation()
       _foundation.should.to.equal(foundation)
+    })
+
+    it('bounty address should be the same as input address of constructor', async function () {
+      const _bounty = await dev.bounty()
+      _bounty.should.to.equal(bounty)
     })
 
     it('transferTimeLockedStart should be now', async function () {

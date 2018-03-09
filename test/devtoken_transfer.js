@@ -11,9 +11,10 @@ contract('DEVToken', function (accounts) {
 
     const owner = accounts[0]
     const foundation = accounts[1]
+    const bounty = accounts[2]
 
-    const contributor1 = accounts[2]
-    const contributor2 = accounts[3]
+    const contributor1 = accounts[3]
+    const contributor2 = accounts[4]
 
     const now = new Date()
     const nowTimeUnix = Math.floor(now.getTime() / 1000)
@@ -24,8 +25,8 @@ contract('DEVToken', function (accounts) {
     let dev
 
     beforeEach(async function () {
-      dev = await DEVToken.new(foundation, nowTimeUnix, oneYearLaterTimeUnix)
-      await dev.spreadToken(contributor1, new BigNumber(10000 * 10 ** 18), 1)
+      dev = await DEVToken.new(foundation, bounty, nowTimeUnix, oneYearLaterTimeUnix)
+      await dev.spreadToken(contributor1, new BigNumber(10000 * 10 ** 18))
     })
 
     it('initial value of transferEnabled is false', async function () {
@@ -86,7 +87,7 @@ contract('DEVToken', function (accounts) {
     it('can transfer via foundation if currentTime is equal or greater than lockTimeEnd', async function() {
       const nowForTestUnix = Math.floor(new Date().getTime() / 1000)
 
-      dev = await DEVToken.new(foundation, nowForTestUnix, nowForTestUnix)
+      dev = await DEVToken.new(foundation, bounty, nowForTestUnix, nowForTestUnix)
       await dev.enableTransfer()
       await dev.transfer(contributor1, new BigNumber(100 * 10 ** 18), { from: foundation }).should.be.rejectedWith(Error)
     })

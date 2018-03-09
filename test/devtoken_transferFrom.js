@@ -11,10 +11,11 @@ contract('DEVToken', function (accounts) {
 
     const owner = accounts[0]
     const foundation = accounts[1]
+    const bounty = accounts[2]
 
-    const contributor1 = accounts[2]
-    const contributor2 = accounts[3]
-    const contributor3 = accounts[4]
+    const contributor1 = accounts[3]
+    const contributor2 = accounts[4]
+    const contributor3 = accounts[5]
 
     const now = new Date()
     const nowTimeUnix = Math.floor(now.getTime() / 1000)
@@ -25,10 +26,10 @@ contract('DEVToken', function (accounts) {
     let dev
 
     beforeEach(async function () {
-      dev = await DEVToken.new(foundation, nowTimeUnix, oneYearLaterTimeUnix)
+      dev = await DEVToken.new(foundation, bounty, nowTimeUnix, oneYearLaterTimeUnix)
       await dev.enableTransfer()
-      await dev.spreadToken(contributor1, new BigNumber(10000 * 10 ** 18), 1)
-      await dev.foundationAllocated()
+      await dev.spreadToken(contributor1, new BigNumber(10000 * 10 ** 18))
+      await dev.spreadToken(foundation, new BigNumber(20000 * 10 ** 18))
       await dev.approve(contributor2, new BigNumber(500 * 10 ** 18), { from: contributor1 })
     })
 
@@ -56,14 +57,14 @@ contract('DEVToken', function (accounts) {
       let foundationBalance = await dev.balanceOf(foundation)
       contributor2Balance = await dev.balanceOf(contributor2)
 
-      foundationBalance.should.be.bignumber.equal(new BigNumber(80000000 * 10 ** 18))
+      foundationBalance.should.be.bignumber.equal(new BigNumber(20000 * 10 ** 18))
       contributor2Balance.should.be.bignumber.equal(new BigNumber(0))
     })
 
     it('can invoke via foundation if currentTime is equal or greater than releaseTime', async function () {
-      dev = await DEVToken.new(foundation, nowTimeUnix, nowTimeUnix)
+      dev = await DEVToken.new(foundation, bounty, nowTimeUnix, nowTimeUnix)
       await dev.enableTransfer()
-      await dev.foundationAllocated()
+      await dev.spreadToken(foundation, new BigNumber(20000 * 10 ** 18))
       await dev.approve(contributor2, new BigNumber(500 * 10 ** 18), { from: foundation })
 
       let contributor2Balance = await dev.balanceOf(contributor2)
@@ -75,7 +76,7 @@ contract('DEVToken', function (accounts) {
       let foundationBalance = await dev.balanceOf(foundation)
       contributor2Balance = await dev.balanceOf(contributor2)
 
-      foundationBalance.should.be.bignumber.equal(new BigNumber(79999998.766 * 10 ** 18))
+      foundationBalance.should.be.bignumber.equal(new BigNumber(19998.766 * 10 ** 18))
       contributor2Balance.should.be.bignumber.equal(new BigNumber(1.234 * 10 ** 18))
     })
   })
