@@ -1,4 +1,5 @@
 const DEVToken = artifacts.require('./DEVToken')
+import { advanceBlock } from './helpers/advanceToBlock'
 
 const BigNumber = web3.BigNumber;
 const should = require('chai')
@@ -10,23 +11,18 @@ contract('DEVToken', function (accounts) {
   describe('burn', function () {
 
     const owner = accounts[0]
-    const foundation = accounts[1]
-    const bounty = accounts[2]
-
-    const now = new Date()
-    const nowTimeUnix = Math.floor(now.getTime() / 1000)
-    const oneYearLaterTimeUnix = Math.floor(
-      new Date(new Date().setFullYear(now.getFullYear() + 1)).getTime() / 1000
-    )
 
     let dev
+    let nowTimeUnix
+    let oneYearLaterTimeUnix
 
     beforeEach(async function () {
-      dev = await DEVToken.new(foundation, bounty, nowTimeUnix, oneYearLaterTimeUnix)
+      await advanceBlock()
+      dev = await DEVToken.new()
     })
 
     it('cannot invoke if not from the owner', async function () {
-      await dev.burn(new BigNumber(200000000 * 10 ** 18), { from: foundation })
+      await dev.burn(new BigNumber(200000000 * 10 ** 18), { from: accounts[1] })
         .should.be.rejectedWith(Error)
     })
 

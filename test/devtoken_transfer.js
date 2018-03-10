@@ -1,4 +1,5 @@
 const DEVToken = artifacts.require('./DEVToken')
+import { advanceBlock } from './helpers/advanceToBlock'
 
 const BigNumber = web3.BigNumber;
 const should = require('chai')
@@ -10,22 +11,15 @@ contract('DEVToken', function (accounts) {
   describe('transfer', function () {
 
     const owner = accounts[0]
-    const foundation = accounts[1]
-    const bounty = accounts[2]
 
-    const contributor1 = accounts[3]
-    const contributor2 = accounts[4]
-
-    const now = new Date()
-    const nowTimeUnix = Math.floor(now.getTime() / 1000)
-    const oneYearLaterTimeUnix = Math.floor(
-      new Date(new Date().setFullYear(now.getFullYear() + 1)).getTime() / 1000
-    )
+    const contributor1 = accounts[1]
+    const contributor2 = accounts[2]
 
     let dev
 
     beforeEach(async function () {
-      dev = await DEVToken.new(foundation, bounty, nowTimeUnix, oneYearLaterTimeUnix)
+      await advanceBlock()
+      dev = await DEVToken.new()
       await dev.spreadToken(contributor1, new BigNumber(10000 * 10 ** 18))
     })
 
@@ -77,19 +71,6 @@ contract('DEVToken', function (accounts) {
     it('cannot transfer to contract itself', async function() {
       await dev.enableTransfer()
       await dev.transfer(dev.address, new BigNumber(100 * 10 ** 18), { from: contributor1 }).should.be.rejectedWith(Error)
-    })
-
-    it('cannot transfer via foundation if currentTime is not equal lockTimeEnd', async function() {
-      await dev.enableTransfer()
-      await dev.transfer(contributor1, new BigNumber(100 * 10 ** 18), { from: foundation }).should.be.rejectedWith(Error)
-    })
-
-    it('can transfer via foundation if currentTime is equal or greater than lockTimeEnd', async function() {
-      const nowForTestUnix = Math.floor(new Date().getTime() / 1000)
-
-      dev = await DEVToken.new(foundation, bounty, nowForTestUnix, nowForTestUnix)
-      await dev.enableTransfer()
-      await dev.transfer(contributor1, new BigNumber(100 * 10 ** 18), { from: foundation }).should.be.rejectedWith(Error)
     })
   })
 })
