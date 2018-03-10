@@ -5,12 +5,6 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
 const compiledContract = require('../build/contracts/DEVToken') // Contract abi goes here
 const contract = new web3.eth.Contract(compiledContract.abi)
 
-const now = new Date()
-const nowTimeUnix = Math.floor(now.getTime() / 1000)
-const oneYearLaterTimeUnix = Math.floor(
-  new Date(new Date().setFullYear(now.getFullYear() + 1)).getTime() / 1000
-)
-
 // Need to unlock owner account first in testrpc or ganache
 
 // Get average gas price 
@@ -31,9 +25,7 @@ web3.eth.getGasPrice()
         return {
           ...opts,
           owner: accounts[0],
-          foundation: accounts[1],
-          bounty: accounts[2],
-          restContributor: accounts.slice(3)
+          restContributor: accounts.slice(1)
         }
       })
 
@@ -41,8 +33,7 @@ web3.eth.getGasPrice()
   .then((opts) => {
     // Estimate gas of contract
     return contract.deploy({
-      data: compiledContract.bytecode,
-      arguments: [opts.foundation, opts.bounty, nowTimeUnix, oneYearLaterTimeUnix]
+      data: compiledContract.bytecode
     })
       .estimateGas()
       .then((estimatedGas) => {
@@ -55,8 +46,7 @@ web3.eth.getGasPrice()
   })
   .then((opts) => {
     return contract.deploy({
-      data: compiledContract.bytecode,
-      arguments: [opts.foundation, opts.bounty, nowTimeUnix, oneYearLaterTimeUnix]
+      data: compiledContract.bytecode
     }).send({
       from: opts.owner,
       gasPrice: opts.averageGasPrice,
