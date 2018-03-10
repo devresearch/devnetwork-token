@@ -1,4 +1,5 @@
 const DEVToken = artifacts.require("./DEVToken.sol");
+const TokenTimelock = artifacts.require("./TokenTimelock.sol");
 
 module.exports = function (deployer, network, accounts) {
   const now = new Date()
@@ -6,10 +7,17 @@ module.exports = function (deployer, network, accounts) {
   const oneYearLaterTimeUnix = Math.floor(
     new Date(new Date().setFullYear(now.getFullYear() + 1)).getTime() / 1000
   )
-
-  if (network == 'live') {
-    deployer.deploy(DEVToken, process.env.FOUNDATION_ADDRESS, process,env.BOUNTY, nowTimeUnix, oneYearLaterTimeUnix);
+  
+  if (network == 'test') {
+    deployer.deploy(DEVToken);
   } else {
-    deployer.deploy(DEVToken, accounts[1], accounts[2], nowTimeUnix, oneYearLaterTimeUnix);
+    deployer.deploy(DEVToken).then(() => {
+      return deployer.deploy(
+        TokenTimelock,
+        DEVToken.address,
+        network == 'live' || network == 'ropsten' ? process.env.FOUNDATION : accounts[1],
+        oneYearLaterTimeUnix
+      );
+    });
   }
 };
