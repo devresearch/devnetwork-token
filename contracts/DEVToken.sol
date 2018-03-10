@@ -2,6 +2,7 @@ pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol";
+import "zeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract DEVToken is StandardToken, BurnableToken, Ownable {
@@ -11,15 +12,10 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
   string public  name = "DEVToken";
   string public  symbol = "DEV";
   uint8  public  decimals = 18;
-  uint256 public constant INITIAL_SUPPLY = 400000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 400000000 * (10 ** uint256(18));
 
   bool    public transferEnabled = false; // indicates that tokens can transfer or not
-  uint256 public transferTimeLockedStart;
-  uint256 public transferTimeLockedEnd;
   uint256 public spreadTokenAmount;
-  
-  address public foundation;
-  address public bounty;
 
   // Modifiers
   modifier validDestination(address _to) {
@@ -29,22 +25,12 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
     _;
   }
 
-  function DEVToken(address _foundation,
-    address _bounty, 
-    uint256 _transferTimeLockedStart, 
-    uint256 _transferTimeLockedEnd) public 
-  {
+  function DEVToken() public {
     totalSupply_ = INITIAL_SUPPLY;
 
     // mint token
     balances[msg.sender] = INITIAL_SUPPLY;
     Transfer(address(0x0), msg.sender, INITIAL_SUPPLY);
-
-    foundation = _foundation;
-    bounty = _bounty;
-
-    transferTimeLockedStart = _transferTimeLockedStart;
-    transferTimeLockedEnd = _transferTimeLockedEnd;
   }
 
   /**
@@ -93,9 +79,6 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
     public validDestination(_to) returns (bool) 
   {
     require(transferEnabled);
-    if (_from == foundation) {
-      require(now >= transferTimeLockedEnd);
-    }
     return super.transfer(_to, _value);
   }
 
@@ -107,9 +90,6 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
     public validDestination(_to) returns (bool) 
   {
     require(transferEnabled);
-    if (_from == foundation) {
-      require(now >= transferTimeLockedEnd);
-    }
     return super.transferFrom(_from, _to, _value);
   } 
 
@@ -121,5 +101,12 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
   function burn(uint256 _value) public {
     require(transferEnabled || msg.sender == owner);
     super.burn(_value);
+  }
+
+  /**
+    * Returns the current time.
+    */
+  function currentTime() external view returns (uint _currentTime) {
+      return now;
   }
 }
