@@ -13,7 +13,7 @@ module.exports = function (deployer, network) {
   // )
 
   console.log(`Deploy time is ${nowTimeUnix}`)
-  console.log(`Release time for tokenTimelock is ${thirtyMinutesLaterTimeUnix}`)
+  console.log(`Release time for tokenTimelock is ${oneYearLaterTimeUnix}`)
 
   if (network == 'test') {
     deployer.deploy(DEVToken);
