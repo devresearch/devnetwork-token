@@ -29,18 +29,18 @@ contract('DEVToken', function (accounts) {
     })
 
     it('can invoke from the owner', async function () {
-      let contributorBalance = await dev.balanceOf(contributor)
-      let spreadTokenAmount = await dev.spreadTokenAmount()
+      let contributorBalance = await dev.balanceOf(contributor),
+        ownerBalance = await dev.balanceOf(owner)
 
       contributorBalance.should.be.bignumber.equal(new BigNumber(0))
-      spreadTokenAmount.should.be.bignumber.equal(new BigNumber(0))
+      ownerBalance.should.be.bignumber.equal(new BigNumber(400000000 * 10 ** 18))
 
       await dev.spreadToken(contributor, new BigNumber(10000 * 10 ** 18)).should.be.fulfilled
       contributorBalance = await dev.balanceOf(contributor)
-      spreadTokenAmount = await dev.spreadTokenAmount()
+      ownerBalance = await dev.balanceOf(owner)
 
       contributorBalance.should.be.bignumber.equal(new BigNumber(10000 * 10 ** 18))
-      spreadTokenAmount.should.be.bignumber.equal(new BigNumber(10000 * 10 ** 18))
+      ownerBalance.should.be.bignumber.equal(new BigNumber(399990000 * 10 ** 18))
     })
 
     it('spread Transfer event when invoke success', async function () {
@@ -66,26 +66,28 @@ contract('DEVToken', function (accounts) {
     })
 
     it('cannot invoke if raised more than balances[owner] of contract', async function () {
-      let contributorBalance = await dev.balanceOf(contributor)
-      let spreadTokenAmount = await dev.spreadTokenAmount()
+      let contributorBalance = await dev.balanceOf(contributor),
+        ownerBalance = await dev.balanceOf(owner)
 
       contributorBalance.should.be.bignumber.equal(new BigNumber(0))
-      spreadTokenAmount.should.be.bignumber.equal(new BigNumber(0))
+      ownerBalance.should.be.bignumber.equal(new BigNumber(400000000 * 10 ** 18))
 
       await dev.spreadToken(contributor, new BigNumber(240000000 * 10 ** 18))
         .should.be.fulfilled
       await dev.spreadToken(contributor, new BigNumber(240000000 * 10 ** 18))
         .should.be.rejectedWith(Error)
       await dev.spreadToken(contributor, new BigNumber(1 * 10 ** 18))
-        .should.be.rejectedWith(Error)
+        .should.be.fulfilled
       await dev.spreadToken(contributor, new BigNumber(1 * 10 ** 18))
+        .should.be.fulfilled
+      await dev.spreadToken(contributor, new BigNumber(240000000 * 10 ** 18))
         .should.be.rejectedWith(Error)
 
       contributorBalance = await dev.balanceOf(contributor)
-      spreadTokenAmount = await dev.spreadTokenAmount()
+      ownerBalance = await dev.balanceOf(owner)
 
-      contributorBalance.should.be.bignumber.equal(new BigNumber(240000000 * 10 ** 18))
-      spreadTokenAmount.should.be.bignumber.equal(new BigNumber(240000000 * 10 ** 18))
+      contributorBalance.should.be.bignumber.equal(new BigNumber(240000002 * 10 ** 18))
+      ownerBalance.should.be.bignumber.equal(new BigNumber(159999998 * 10 ** 18))
     })
 
     it('cannot invoke if input for spreading more than totalSupply', async function () {

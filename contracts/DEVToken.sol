@@ -15,7 +15,6 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
   uint256 public constant INITIAL_SUPPLY = 400000000 * (10 ** uint256(18));
 
   bool    public transferEnabled = false; // indicates that tokens can transfer or not
-  uint256 public spreadTokenAmount;
 
   // Modifiers
   modifier validDestination(address _to) {
@@ -54,11 +53,6 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
   function spreadToken(address _to, uint256 _valueInWei) 
     public onlyOwner validDestination(_to) 
   {
-    spreadTokenAmount = spreadTokenAmount.add(_valueInWei);
-
-    require(spreadTokenAmount <= totalSupply_);
-    require(spreadTokenAmount <= balances[msg.sender]);
-
     balances[_to] = balances[_to].add(_valueInWei);
     balances[msg.sender] = balances[msg.sender].sub(_valueInWei);
     Transfer(msg.sender, _to, _valueInWei);
