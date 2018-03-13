@@ -1,12 +1,7 @@
-const Web3 = require('web3')
+const { web3, contract, compiledContract } = require('./initial')
 
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
-
-const compiledContract = require('../build/contracts/DEVToken') // Contract abi goes here
-const contract = new web3.eth.Contract(compiledContract.abi)
-
+// For testrpc
 // Need to unlock owner account first in testrpc or ganache
-
 // Get average gas price 
 web3.eth.getGasPrice()
   .then((averageGasPrice) => {
