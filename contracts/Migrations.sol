@@ -1,3 +1,6 @@
+// Copyright (c) 2018 Devnetwork
+// license that can be found in the LICENSE file.
+
 pragma solidity ^0.4.17;
 
 contract Migrations {

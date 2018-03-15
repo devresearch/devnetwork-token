@@ -1,3 +1,6 @@
+// Copyright (c) 2018 Devnetwork
+// license that can be found in the LICENSE file.
+
 import latestTime from './latestTime';
 
 // Increases testrpc time by the passed duration in seconds
