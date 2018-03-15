@@ -19,7 +19,7 @@ if (network == 'ropsten') {
 const config = require('./config.js')
 const networkConfig = config.networks[network]
 
-const compiledContract = require('../build/contracts/DEVToken') // Contract abi goes here
+const compiledContract = require('../../build/contracts/DEVToken') // Contract abi goes here
 const contract = new web3.eth.Contract(compiledContract.abi, network ? networkConfig.contractAddress : undefined)
 
 module.exports = {
