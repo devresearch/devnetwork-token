@@ -1,3 +1,6 @@
+// Copyright (c) 2018 Devnetwork
+// license that can be found in the LICENSE file.
+
 pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
@@ -95,12 +98,5 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
   function burn(uint256 _value) public {
     require(transferEnabled || msg.sender == owner);
     super.burn(_value);
-  }
-
-  /**
-    * Returns the current time.
-    */
-  function currentTime() external view returns (uint _currentTime) {
-      return now;
   }
 }

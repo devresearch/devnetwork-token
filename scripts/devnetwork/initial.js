@@ -3,6 +3,9 @@ const HDWalletProvider = require("truffle-hdwallet-provider")
 
 let web3
 
+// Copyright (c) 2018 Devnetwork
+// license that can be found in the LICENSE file.
+
 const infuraToken = process.env.INFURA_TOKEN
 const mnemonic = process.env.MNEMONIC
 const network = process.env.NETWORK

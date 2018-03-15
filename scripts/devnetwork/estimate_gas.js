@@ -1,3 +1,6 @@
+// Copyright (c) 2018 Devnetwork
+// license that can be found in the LICENSE file.
+
 const { web3, contract, compiledContract } = require('./initial')
 
 // For testrpc
