@@ -1,3 +1,6 @@
+// Copyright (c) 2018 Devnetwork
+// license that can be found in the LICENSE file.
+
 pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
