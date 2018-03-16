@@ -154,6 +154,32 @@ contract BasicToken is ERC20Basic {
 
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    Burn(burner, _value);
+  }
+}
+
 // File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
 /**
@@ -264,126 +290,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/MintableToken.sol
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-}
-
-// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
-// File: zeppelin-solidity/contracts/token/ERC20/PausableToken.sol
-
-/**
- * @title Pausable token
- * @dev StandardToken modified with pausable transfers.
- **/
-contract PausableToken is StandardToken, Pausable {
-
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-    return super.increaseApproval(_spender, _addedValue);
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-}
-
 // File: zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
 
 /**
@@ -447,36 +353,102 @@ contract TokenTimelock {
 
 // File: contracts/DEVToken.sol
 
-contract DEVToken is PausableToken, MintableToken {
+contract DEVToken is StandardToken, BurnableToken, Ownable {
   using SafeMath for uint256;
 
-  string public name = "DEVToken";
-  string public symbol = "DEV";
-  uint8 public decimals = 18;
+  // Constants
+  string public  name = "DEVToken";
+  string public  symbol = "DEV";
+  uint8  public  decimals = 18;
+  uint256 public constant INITIAL_SUPPLY = 400000000 * (10 ** uint256(18));
 
-  /**
-   * @dev Override the pause function to ensure no one can pause after minting.
-   */
-  function pause() onlyOwner whenNotPaused canMint public {
-      super.pause();
+  bool    public transferEnabled = false; // indicates that tokens can transfer or not
+
+  // Modifiers
+  modifier validDestination(address _to) {
+    require(_to != address(0x0));
+    require(_to != address(this));
+    require(_to != owner);
+    _;
+  }
+
+  function DEVToken() public {
+    totalSupply_ = INITIAL_SUPPLY;
+
+    // mint token
+    balances[msg.sender] = INITIAL_SUPPLY;
+    Transfer(address(0x0), msg.sender, INITIAL_SUPPLY);
   }
 
   /**
-   * @dev Make sure we cannot finish minting when paused, otherwise we are paused forever.
+   * @dev Method for spreading devnetwork token to many addresses
+   * @param _to multiple address for sending token to
+   * @param _valueInWei amounts of devnetwork token in wei 
    */
-  function finishMinting() onlyOwner whenNotPaused canMint public returns (bool) {
-      return super.finishMinting();
+  function spreadTokenAddresses(address[] _to, uint256[] _valueInWei) 
+    public onlyOwner 
+  {
+    for (uint256 i = 0 ; i < _to.length ; i++) {
+      spreadToken(_to[i], _valueInWei[i]);
+    }
   }
-  
+
   /**
-   * @dev Mint timelocked tokens
+   * @dev Method for spreading devnetwork token to many addresses
+   * @param _to address for sending token to
+   * @param _valueInWei amount of devnetwork token in wei 
    */
-  function mintTimelocked(address _to, uint256 _amount, uint256 _releaseTime)
-    onlyOwner canMint public returns (TokenTimelock) {
+  function spreadToken(address _to, uint256 _valueInWei) 
+    public onlyOwner validDestination(_to) 
+  {
+    balances[_to] = balances[_to].add(_valueInWei);
+    balances[msg.sender] = balances[msg.sender].sub(_valueInWei);
+    Transfer(msg.sender, _to, _valueInWei);
+  }
 
-    TokenTimelock timelock = new TokenTimelock(this, _to, _releaseTime);
-    mint(timelock, _amount);
+  /**
+   * @dev Enable transfer, and it is not possible to disable transfer again
+   */
+  function enableTransfer() external onlyOwner {
+    transferEnabled = true;
+  }
 
-    return timelock;
+  /**
+   * @dev Overrides ERC20 transfer function with modifier that prevents the
+   * ability to transfer tokens until after transfers have been enabled.
+   */
+  function transfer(address _to, uint256 _value) 
+    public validDestination(_to) returns (bool) 
+  {
+    require(transferEnabled);
+    return super.transfer(_to, _value);
+  }
+
+  /**
+   * @dev Overrides ERC20 transfer function with modifier that prevents the
+   * ability to transfer tokens until after transfers have been enabled.
+   */
+  function transferFrom(address _from, address _to, uint256 _value) 
+    public validDestination(_to) returns (bool) 
+  {
+    require(transferEnabled);
+    return super.transferFrom(_from, _to, _value);
+  } 
+
+  /**
+    * Overrides the burn function so that it cannot be called until after
+    * transfers have been enabled.
+    * @param _value    The amount of devnetwork tokens in wei
+    */
+  function burn(uint256 _value) public {
+    require(transferEnabled || msg.sender == owner);
+    super.burn(_value);
+  }
+
+  /**
+    * Returns the current time.
+    */
+  function currentTime() external view returns (uint _currentTime) {
+      return now;
   }
 }
