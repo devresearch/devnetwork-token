@@ -61,19 +61,9 @@ contract('DEVToken', function (accounts) {
       balance.should.be.bignumber.equal(new BigNumber(100 * 10 ** 18))
     })
 
-    it('cannot transfer to owner of contract', async function () {
-      await dev.enableTransfer()
-      await dev.transfer(owner, new BigNumber(100 * 10 ** 18), { from: contributor1 }).should.be.rejectedWith(Error)
-    })
-
     it('cannot transfer to address 0x0', async function() {
       await dev.enableTransfer()
       await dev.transfer('0x0', new BigNumber(100 * 10 ** 18), { from: contributor1 }).should.be.rejectedWith(Error)
-    })
-
-    it('cannot transfer to contract itself', async function() {
-      await dev.enableTransfer()
-      await dev.transfer(dev.address, new BigNumber(100 * 10 ** 18), { from: contributor1 }).should.be.rejectedWith(Error)
     })
   })
 })

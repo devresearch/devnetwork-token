@@ -15,17 +15,9 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
   string public  name = "DEVToken";
   string public  symbol = "DEV";
   uint8  public  decimals = 18;
-  uint256 public constant INITIAL_SUPPLY = 400000000 * (10 ** uint256(18));
+  uint256 public constant INITIAL_SUPPLY = 400000000 * (10 ** uint256(decimals));
 
   bool    public transferEnabled = false; // indicates that tokens can transfer or not
-
-  // Modifiers
-  modifier validDestination(address _to) {
-    require(_to != address(0x0));
-    require(_to != address(this));
-    require(_to != owner);
-    _;
-  }
 
   function DEVToken() public {
     totalSupply_ = INITIAL_SUPPLY;
@@ -40,22 +32,18 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
    * @param _to multiple address for sending token to
    * @param _valueInWei amounts of devnetwork token in wei 
    */
-  function spreadTokenAddresses(address[] _to, uint256[] _valueInWei) 
-    public onlyOwner 
-  {
+  function spreadTokenAddresses(address[] _to, uint256[] _valueInWei) public onlyOwner {
     for (uint256 i = 0 ; i < _to.length ; i++) {
       spreadToken(_to[i], _valueInWei[i]);
     }
   }
 
   /**
-   * @dev Method for spreading devnetwork token to many addresses
+   * @dev Method for spreading devnetwork token to one address
    * @param _to address for sending token to
    * @param _valueInWei amount of devnetwork token in wei 
    */
-  function spreadToken(address _to, uint256 _valueInWei) 
-    public onlyOwner validDestination(_to) 
-  {
+  function spreadToken(address _to, uint256 _valueInWei) public onlyOwner {
     balances[_to] = balances[_to].add(_valueInWei);
     balances[msg.sender] = balances[msg.sender].sub(_valueInWei);
     Transfer(msg.sender, _to, _valueInWei);
@@ -72,9 +60,7 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
    * @dev Overrides ERC20 transfer function with modifier that prevents the
    * ability to transfer tokens until after transfers have been enabled.
    */
-  function transfer(address _to, uint256 _value) 
-    public validDestination(_to) returns (bool) 
-  {
+  function transfer(address _to, uint256 _value) public returns (bool) {
     require(transferEnabled);
     return super.transfer(_to, _value);
   }
@@ -83,9 +69,7 @@ contract DEVToken is StandardToken, BurnableToken, Ownable {
    * @dev Overrides ERC20 transfer function with modifier that prevents the
    * ability to transfer tokens until after transfers have been enabled.
    */
-  function transferFrom(address _from, address _to, uint256 _value) 
-    public validDestination(_to) returns (bool) 
-  {
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     require(transferEnabled);
     return super.transferFrom(_from, _to, _value);
   } 
