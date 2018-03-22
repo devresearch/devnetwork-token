@@ -3,6 +3,7 @@
 
 const DEVToken = artifacts.require("./DEVToken.sol");
 const TokenTimelock = artifacts.require("./TokenTimelock.sol");
+const EscrowToken = artifacts.require("./EscrowToken.sol")
 
 module.exports = function (deployer, network) {
   const now = new Date()
@@ -20,6 +21,7 @@ module.exports = function (deployer, network) {
 
   if (network == 'test') {
     deployer.deploy(DEVToken);
+    deployer.deploy(EscrowToken);
   } else {
     deployer.deploy(DEVToken).then(() => {
       return deployer.deploy(
